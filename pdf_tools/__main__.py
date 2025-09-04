@@ -14,24 +14,24 @@ def main():
     # merge command
     merge_parser = subparsers.add_parser('merge', help='Merge PDF files')
     merge_parser.add_argument('files', nargs='+', help='PDF files to merge')
-    merge_parser.add_argument('--output', default='merged.pdf', help='Output file')
+    merge_parser.add_argument('--output', '-o', default='merged.pdf', help='Output file')
 
     # compress command
     compress_parser = subparsers.add_parser('compress', help='Compress PDF')
     compress_parser.add_argument('input', help='Input PDF')
-    compress_parser.add_argument('--output', help='Output PDF')
+    compress_parser.add_argument('--output', '-o', help='Output PDF')
     compress_parser.add_argument('--quality', default='printer', help='Quality')
 
     # image-to-pdf command
     itp_parser = subparsers.add_parser('image-to-pdf', help='Convert images to PDF')
     itp_parser.add_argument('images', nargs='+', help='Image files')
-    itp_parser.add_argument('--output', default='output.pdf', help='Output PDF')
+    itp_parser.add_argument('--output', '-o', default='output.pdf', help='Output PDF')
     itp_parser.add_argument('--rotate', nargs='*', help='Rotate list (format: idx,angle)')
 
     # pdf-to-image command
     pti_parser = subparsers.add_parser('pdf-to-image', help='Convert PDF to images')
-    pti_parser.add_argument('pdf', help='PDF file')
-    pti_parser.add_argument('--output', help='Output folder')
+    pti_parser.add_argument('pdf', nargs='+', help='PDF files')
+    pti_parser.add_argument('--output', '-o', help='Output folder (if not specified, creates folder per PDF)')
     pti_parser.add_argument('--dpi', type=int, default=200, help='DPI')
     pti_parser.add_argument('--format', default='png', help='Image format')
 

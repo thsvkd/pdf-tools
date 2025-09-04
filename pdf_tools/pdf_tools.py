@@ -280,47 +280,56 @@ class PDFTools:
         except Exception as e:
             print(f"오류가 발생했습니다: {e}")
 
-    def pdf_to_image(self, pdf_path: str, output_folder: Optional[str] = None, dpi: int = 200, format: str = "png"):
+    def pdf_to_image(self, pdf_paths: list[str], output_folder: Optional[str] = None, dpi: int = 200, format: str = "png"):
         """
-        PDF 파일을 이미지로 변환하는 함수
+        PDF 파일들을 이미지로 변환하는 함수
 
         Args:
-            pdf_path (str): 변환할 PDF 파일 경로
-            output_folder (str): 이미지가 저장될 폴더 경로
+            pdf_paths (list[str]): 변환할 PDF 파일 경로 리스트
+            output_folder (str): 이미지가 저장될 기본 폴더 경로 (None시 각 PDF별 폴더 자동 생성)
             dpi (int): 변환 시 해상도 (기본값: 200)
             format (str): 출력 이미지 형식 (기본값: 'png')
 
         Returns:
-            list: 생성된 이미지 파일 경로 리스트
+            dict: 각 PDF에 대한 생성된 이미지 파일 경로 리스트 딕셔너리
         """
-        if not os.path.exists(pdf_path):
-            raise FileNotFoundError(f"PDF 파일을 찾을 수 없습니다: {pdf_path}")
+        results = {}
+        for pdf_path in pdf_paths:
+            if not os.path.exists(pdf_path):
+                print(f"❌ PDF 파일을 찾을 수 없습니다: {pdf_path}")
+                continue
 
-        if output_folder is None:
-            output_folder = os.path.splitext(pdf_path)[0] + "_images"
+            # 각 PDF에 대한 출력 폴더 결정
+            if output_folder is None:
+                pdf_folder = os.path.splitext(pdf_path)[0] + "_images"
+            else:
+                pdf_name = os.path.splitext(os.path.basename(pdf_path))[0]
+                pdf_folder = os.path.join(output_folder, pdf_name + "_images")
 
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
+            if not os.path.exists(pdf_folder):
+                os.makedirs(pdf_folder)
 
-        try:
-            # PDF를 이미지로 변환
-            images = convert_from_path(pdf_path, dpi=dpi)
-            image_paths = []
+            try:
+                # PDF를 이미지로 변환
+                images = convert_from_path(pdf_path, dpi=dpi, use_pdftocairo=True)
+                image_paths = []
 
-            pbar = ProgressBar(len(images), "🔄 PDF를 이미지로 변환 중", "page", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}")
-            for i, image in enumerate(images):
-                image_path = os.path.join(output_folder, f"page_{i + 1}.{format}")
-                image.save(image_path, format.upper())
-                image_paths.append(image_path)
-                pbar.update(1)
-            pbar.close()
+                pbar = ProgressBar(len(images), f"🔄 {os.path.basename(pdf_path)} 변환 중", "page", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}")
+                for i, image in enumerate(images):
+                    image_path = os.path.join(pdf_folder, f"page_{i + 1}.{format}")
+                    image.save(image_path, format.upper())
+                    image_paths.append(image_path)
+                    pbar.update(1)
+                pbar.close()
 
-            print(f"✅ PDF가 {format.upper()} 이미지로 변환되었습니다. 총 {len(image_paths)}장 생성됨.")
-            return image_paths
+                results[pdf_path] = image_paths
+                print(f"✅ {os.path.basename(pdf_path)}가 {format.upper()} 이미지로 변환되었습니다. 총 {len(image_paths)}장 생성됨. 폴더: {pdf_folder}")
 
-        except Exception as e:
-            print(f"❌ PDF 변환 중 오류가 발생했습니다: {e}")
-            return []
+            except Exception as e:
+                print(f"❌ {os.path.basename(pdf_path)} 변환 중 오류가 발생했습니다: {e}")
+                results[pdf_path] = []
+
+        return results
 
 
 # 사용 예시

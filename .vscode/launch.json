@@ -13,6 +13,46 @@
       "args": ["--help"]
     },
     {
+      "name": "Run pdf_tools (merge)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pdf_tools",
+      "console": "integratedTerminal",
+      "args": [
+        "merge",
+      ]
+    },
+    {
+      "name": "Run pdf_tools (compress)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pdf_tools",
+      "console": "integratedTerminal",
+      "args": [
+        "compress",
+      ]
+    },
+    {
+      "name": "Run pdf_tools (image-to-pdf)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pdf_tools",
+      "console": "integratedTerminal",
+      "args": [
+        "image-to-pdf",
+      ]
+    },
+    {
+      "name": "Run pdf_tools (pdf-to-image)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pdf_tools",
+      "console": "integratedTerminal",
+      "args": [
+        "pdf-to-image",
+      ]
+    },
+    {
       "name": "Current file",
       "type": "debugpy",
       "request": "launch",
