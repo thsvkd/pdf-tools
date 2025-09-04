@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdf-tools"
+version = "0.1.0"
+description = "PDF processing tools including merge, compress, and convert functions"
+authors = [{name = "thsvkd", email = "thsxogud1123@gmail.com"}]
+dependencies = [
+    "pdf2image",
+    "tqdm",
+    "Pillow",
+    "PyPDF2",
+]
+requires-python = ">=3.8"
+
+[project.scripts]
+pdf-tools = "pdf_tools.__main__:main"
+
+[tool.ruff]
+line-length = 88
+ignore = ["E501"]  # line too long, handled by formatter
