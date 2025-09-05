@@ -7,7 +7,7 @@ import click
 import coloredlogs
 from dotenv import load_dotenv
 
-from .pdf_tools import PDFTools
+from .common.pdf_tools import PDFTools
 
 
 def setup_file_logging():
