@@ -1,61 +1,61 @@
 # pdf-tools
 
-PDF 처리 도구 모음
+PDF processing tool collection
 
-## 기능
+## Features
 
-- PDF 파일 이름 변경
-- PDF 병합
-- PDF 압축
-- 이미지에서 PDF 생성
-- PDF에서 이미지 변환 (여러 파일 지원)
+- Rename PDF files
+- Merge PDFs
+- Compress PDFs
+- Create PDF from images
+- Convert PDF to images (multiple files supported)
 
-## 설치
+## Installation
 
 ```bash
 pip install -e .
 ```
 
-또는
+or
 
 ```bash
 python -m pip install .
 ```
 
-## 의존성
+## Dependencies
 
 - pdf2image
 - tqdm
 - Pillow
 - PyPDF2
 
-## 사용법
+## Usage
 
-### PDF 파일 이름 변경
+### Rename PDF files
 
 ```bash
 pdf-tools rename <directory> [--dry-run]
 ```
 
-### PDF 병합
+### Merge PDFs
 
 ```bash
 pdf-tools merge <file1.pdf> <file2.pdf> ... [--output merged.pdf]
 ```
 
-### PDF 압축
+### Compress PDF
 
 ```bash
 pdf-tools compress <input.pdf> [--output output.pdf] [--quality printer]
 ```
 
-### 이미지에서 PDF 생성
+### Create PDF from images
 
 ```bash
 pdf-tools image-to-pdf <image1.jpg> <image2.png> ... [--output output.pdf] [--rotate idx,angle]
 ```
 
-### PDF에서 이미지 변환
+### Convert PDF to images
 
 ```bash
 pdf-tools pdf-to-image <input.pdf> ... [--output output_dir] [--dpi 200] [--format png]
@@ -65,12 +65,12 @@ or
 
 ```bash
 pdf-tools pdf-to-image <pdf1.pdf> <pdf2.pdf> ... [--output output_dir] [--dpi 200] [--format png]
-# 여러 PDF 파일을 동시에 변환할 수 있습니다. 각 PDF에 대해 별도의 폴더가 생성됩니다.
+# You can convert multiple PDF files at once. A separate folder is created for each PDF.
 ```
 
-## 유의 사항
+## Notes
 
-- 한글 PDF 변환 시 한글 폰트가 필요합니다. 다음 명령으로 설치하세요:
+- Korean fonts are required for Korean PDF conversion. Install with the following commands:
 
   ```bash
   sudo apt-get update
@@ -78,6 +78,6 @@ pdf-tools pdf-to-image <pdf1.pdf> <pdf2.pdf> ... [--output output_dir] [--dpi 20
   fc-cache -f -v
   ```
 
-- 여러 PDF 파일을 동시에 변환할 수 있습니다. 각 PDF에 대해 별도의 폴더가 생성됩니다.
+- You can convert multiple PDF files at once. A separate folder is created for each PDF.
 
-- Python 3.8 이상이 필요합니다.
+- Python 3.8 or higher is required.
