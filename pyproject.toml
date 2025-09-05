@@ -12,12 +12,48 @@ dependencies = [
     "tqdm",
     "Pillow",
     "PyPDF2",
+    "coloredlogs",
+    "dotenv",
+    "click",
 ]
 requires-python = ">=3.8"
 
 [project.scripts]
 pdf-tools = "pdf_tools.__main__:main"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pdf_tools"]
+exclude = [] 
+
 [tool.ruff]
+# 라인 길이 설정
 line-length = 88
-ignore = ["E501"]  # line too long, handled by formatter
+
+# Python 버전 설정
+target-version = "py312"
+
+# 체크할 규칙들
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    # "UP",  # pyupgrade
+]
+
+[tool.ruff.format]
+# 문자열 따옴표 스타일
+quote-style = "double"
+
+# 들여쓰기 스타일
+indent-style = "space"
+
+# 라인 끝 스타일
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+# import 정렬 설정
+known-first-party = ["pdf_tools"]

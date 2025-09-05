@@ -1,13 +1,18 @@
+import logging
 import os
-import time
 import subprocess
+import textwrap
+import time
+from pathlib import Path
 from typing import Optional
 
+from pdf2image import convert_from_path
 from PIL import Image
 from PyPDF2 import PdfReader, PdfWriter
-from pdf2image import convert_from_path
 
 from .common.helper.progress_bar import ProgressBar
+
+logger = logging.getLogger(__file__)
 
 
 class PDFTools:
@@ -22,7 +27,7 @@ class PDFTools:
         self,
         pdf_files: list[str],
         output_path: str = "merged_output.pdf",
-        uniform_size: tuple[float, float] = (595.276, 841.89)
+        uniform_size: tuple[float, float] = (595.276, 841.89),
     ):
         """
         A function to quickly merge PDFs based on streams, unifying page sizes
@@ -36,7 +41,7 @@ class PDFTools:
             None
         """
         if not pdf_files:
-            print("병합할 PDF 파일이 없습니다.")
+            logger.warning("No PDF files to merge.")
             return
 
         # Check file existence in batch
@@ -51,9 +56,14 @@ class PDFTools:
 
             # Quickly merge based on streams, unify page sizes
             total_files = len(pdf_files)
-            with ProgressBar(total_files, "🔄 Merging PDFs", "file", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}") as pbar:
+            with ProgressBar(
+                total_files,
+                "🔄 Merging PDFs",
+                "file",
+                "{desc}: {percentage:3.0f}%|{bar}| {elapsed}",
+            ) as pbar:
                 for pdf_file in pdf_files:
-                    print(f"Merging: {pdf_file}")
+                    logger.info(f"Merging: {pdf_file}")
 
                     with open(pdf_file, "rb") as f:
                         reader = PdfReader(f)
@@ -70,14 +80,14 @@ class PDFTools:
                 writer.write(output_file)
 
             elapsed_time = time.time() - start_time
-            print(f"✅ Merge completed! File saved at: {output_path}")
-            print(f"⏱️ Elapsed time: {elapsed_time:.2f}s")
-            print(f"📐 Page size unified: {uniform_size[0]}x{uniform_size[1]} points (A4)")
+            logger.info(f"✅ Merge completed! File saved at: {output_path}")
+            logger.info(f"Elapsed time: {elapsed_time:.2f}s")
+            logger.info(f"Page size unified: {uniform_size[0]}x{uniform_size[1]} points (A4)")
 
         except Exception as e:
-            print(f"❌ Error occurred during merging: {e}")
+            logger.error(f"❌ Error occurred during merging: {e}")
 
-    def compress_pdf(self, input_path: str, output_path: str = None, quality: str = "printer"):
+    def compress_pdf(self, input_path: str, output_path: Optional[str] = None, quality: str = "printer") -> bool:
         """
         High-performance PDF compression function using Ghostscript (with progress bar)
 
@@ -90,7 +100,8 @@ class PDFTools:
             tuple: (success, compression_ratio, message)
         """
         if not os.path.exists(input_path):
-            return False, 0, f"입력 파일이 존재하지 않습니다: {input_path}"
+            logger.error(f"Input file does not exist: {input_path}")
+            raise FileNotFoundError
 
         if output_path is None:
             name, ext = os.path.splitext(input_path)
@@ -121,9 +132,19 @@ class PDFTools:
             start_time = time.time()
 
             # Set up progress bar
-            with ProgressBar(100, "🔄 Compressing PDF", "%", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}") as pbar:
+            with ProgressBar(
+                100,
+                "🔄 Compressing PDF",
+                "%",
+                "{desc}: {percentage:3.0f}%|{bar}| {elapsed}",
+            ) as pbar:
                 # Run subprocess in a separate thread
-                process = subprocess.Popen(gs_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                process = subprocess.Popen(
+                    gs_command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
 
                 # Update progress bar (estimated based on file size)
                 while process.poll() is None:
@@ -150,7 +171,8 @@ class PDFTools:
             # Check for errors
             stdout, stderr = process.communicate()
             if process.returncode != 0:
-                return False, 0, f"Ghostscript execution error: {stderr}"
+                logger.error(f"Ghostscript error: {stderr}")
+                raise subprocess.CalledProcessError(process.returncode, gs_command, output=stdout, stderr=stderr)
 
             # Compressed file size
             compressed_size = os.path.getsize(output_path)
@@ -158,21 +180,32 @@ class PDFTools:
 
             elapsed_time = time.time() - start_time
 
-            print("\n✅ PDF compression completed!")
-            print(f"📁 Original size: {original_size / 1024 / 1024:.2f} MB")
-            print(f"📦 After compression: {compressed_size / 1024 / 1024:.2f} MB")
-            print(f"📉 Compression ratio: {compression_ratio:.1f}% reduction")
-            print(f"⏱️ Elapsed time: {elapsed_time:.2f}s")
-            print(f"💾 Saved at: {output_path}")
+            logger.info(
+                textwrap.dedent(f"""
+                ✅ PDF compression completed!
+                Original size: {original_size / 1024 / 1024:.2f} MB
+                After compression: {compressed_size / 1024 / 1024:.2f} MB
+                Compression ratio: {compression_ratio:.1f}% reduction
+                Elapsed time: {elapsed_time:.2f}s
+                Saved at: {Path(output_path).absolute()}
+                """)
+            )
 
-            return True, compression_ratio, "Compression successful"
+            return True
 
         except subprocess.CalledProcessError as e:
-            return False, 0, f"Ghostscript execution error: {e}"
+            logger.error(f"Ghostscript execution error: {e}")
+            return False
         except Exception as e:
-            return False, 0, f"Error during compression: {e}"
+            logger.error(f"Error during compression: {e}")
+            return False
 
-    def image_to_pdf(self, image_files: list[str], rotate: list[tuple[int, int]] = [], output_path: str = "output.pdf"):
+    def image_to_pdf(
+        self,
+        image_files: list[str],
+        rotate: Optional[list[tuple[int, int]]] = None,
+        output_path: str = "output.pdf",
+    ):
         """
         Function to convert image files to PDF (supports JPEG, PNG, etc.)
 
@@ -184,13 +217,20 @@ class PDFTools:
         Returns:
             None
         """
+        if rotate is None:
+            rotate = []
         try:
             images = []
             # Convert to rotation dictionary (index: rotation angle)
-            rotate_dict = {idx: angle for idx, angle in rotate}
+            rotate_dict = dict(rotate)
 
             total_images = len(image_files)
-            with ProgressBar(total_images, "🔄 Converting images to PDF", "image", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}") as pbar:
+            with ProgressBar(
+                total_images,
+                "🔄 Converting images to PDF",
+                "image",
+                "{desc}: {percentage:3.0f}%|{bar}| {elapsed}",
+            ) as pbar:
                 for i, file_path in enumerate(image_files):
                     # Open image file (format supported by PIL)
                     img = Image.open(file_path)
@@ -211,16 +251,22 @@ class PDFTools:
             # Save as PDF by appending the rest based on the first image
             if images:
                 images[0].save(output_path, save_all=True, append_images=images[1:])
-                print(f"PDF file created: {output_path}")
+                logger.info(f"PDF file created: {output_path}")
             else:
-                print("No input image files.")
+                logger.warning("No input image files.")
 
         except FileNotFoundError as e:
-            print(f"File not found: {e}")
+            logger.error(f"File not found: {e}")
         except Exception as e:
-            print(f"오류가 발생했습니다: {e}")
+            logger.error(f"An error occurred: {e}")
 
-    def pdf_to_image(self, pdf_paths: list[str], output_folder: Optional[str] = None, dpi: int = 200, format: str = "png"):
+    def pdf_to_image(
+        self,
+        pdf_paths: list[str],
+        output_folder: Optional[str] = None,
+        dpi: int = 200,
+        format: str = "png",
+    ):
         """
         Function to convert PDF files to images
 
@@ -236,7 +282,7 @@ class PDFTools:
         results = {}
         for pdf_path in pdf_paths:
             if not os.path.exists(pdf_path):
-                print(f"❌ PDF file not found: {pdf_path}")
+                logger.error(f"❌ PDF file not found: {pdf_path}")
                 continue
 
             # Determine output folder for each PDF
@@ -255,7 +301,10 @@ class PDFTools:
                 image_paths = []
 
                 with ProgressBar(
-                    len(images), f"🔄 Converting {os.path.basename(pdf_path)}", "page", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}"
+                    len(images),
+                    f"🔄 Converting {os.path.basename(pdf_path)}",
+                    "page",
+                    "{desc}: {percentage:3.0f}%|{bar}| {elapsed}",
                 ) as pbar:
                     for i, image in enumerate(images):
                         image_path = os.path.join(pdf_folder, f"page_{i + 1}.{format}")
@@ -264,12 +313,17 @@ class PDFTools:
                         pbar.update(1)
 
                 results[pdf_path] = image_paths
-                print(
-                    f"✅ {os.path.basename(pdf_path)} converted to {format.upper()} images. Total {len(image_paths)} images created. Folder: {pdf_folder}"
+                logger.info(
+                    textwrap.dedent(
+                        f"""
+                        ✅ {os.path.basename(pdf_path)} converted to {format.upper()} images.
+                        Total {len(image_paths)} images created. Folder: {pdf_folder}
+                        """
+                    )
                 )
 
             except Exception as e:
-                print(f"❌ Error occurred during conversion of {os.path.basename(pdf_path)}: {e}")
+                logger.error(f"❌ Error occurred during conversion of {os.path.basename(pdf_path)}: {e}")
                 results[pdf_path] = []
 
         return results

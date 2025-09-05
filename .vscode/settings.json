@@ -1,0 +1,42 @@
+{
+  // Set Ruff to default Python inter
+  "python.linting.enabled": true,
+  "python.linting.ruffEnabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": false,
+  "python.linting.mypyEnabled": false,
+  
+  // Set Ruff to the default formatter
+  "python.formatting.provider": "none",
+  "[python]": {
+      "editor.defaultFormatter": "charliermarsh.ruff",
+      "editor.formatOnSave": true,
+      "editor.codeActionsOnSave": {
+          "source.fixAll.ruff": "explicit",
+          "source.organizeImports.ruff": "explicit"
+      }
+  },
+  
+  // Editor settings (matching Ruff settings)
+  "editor.rulers": [88],
+  "python.analysis.typeCheckingMode": "basic",
+  
+  // Automatic formatting when saving files
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "editor.formatOnType": false,
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "Write the first line in a format like Feature: ***, Fix: ***, or Refactor: *** (Write in words that are often used in commit messages)."
+    },
+    {
+      "text": "Leave the second line as a blank line."
+    },
+    {
+      "text": "From the third line onwards, write a clear but concise description that sufficiently reflects the changes. At this time, please explain in detail what the changes are, why they were made, and how they were implemented. Write in '- ***' format."
+    },
+    {
+      "text": "Finally, always write commits in English."
+    }
+  ]
+}
