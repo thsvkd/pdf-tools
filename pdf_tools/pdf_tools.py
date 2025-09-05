@@ -1,78 +1,22 @@
 import os
-import re
 import time
 import subprocess
-from pdf2image import convert_from_path
-from pathlib import Path
 from typing import Optional
 
-from tqdm import tqdm
 from PIL import Image
 from PyPDF2 import PdfReader, PdfWriter
+from pdf2image import convert_from_path
 
-
-class ProgressBar:
-    """
-    진행바를 관리하는 클래스
-    """
-    def __init__(self, total: int, desc: str, unit: str, bar_format: str):
-        self.pbar = tqdm(total=total, desc=desc, unit=unit, bar_format=bar_format)
-
-    def update(self, n: int = 1):
-        self.pbar.update(n)
-
-    def close(self):
-        self.pbar.close()
+from .common.helper.progress_bar import ProgressBar
 
 
 class PDFTools:
     """
-    PDF 관련 도구들을 모은 클래스
+    A class that collects PDF-related tools
     """
 
     def __init__(self):
         pass
-
-    def get_ext_files(self, root: str, ext: str) -> list[str]:
-        """
-        지정된 루트 디렉토리에서 특정 확장자의 파일들을 재귀적으로 찾음
-
-        Args:
-            root (str): 검색할 루트 디렉토리 경로
-            ext (str): 찾을 파일 확장자 (예: '.pdf')
-
-        Returns:
-            list[str]: 찾은 파일 경로 리스트
-        """
-        return [str(p) for p in Path(root).rglob(f"*{ext}")]
-
-    def rename_files_in_directory(self, directory_path: str, dry_run: bool = False):
-        """
-        지정된 디렉토리의 파일들을 새로운 형식으로 이름 변경
-        dry_run이 True이면 실제 변경 없이 변경될 내용을 출력
-
-        Args:
-            directory_path (str): 파일들이 있는 디렉토리 경로
-            dry_run (bool): 실제 변경 없이 출력할지 여부
-        """
-        for filename in os.listdir(directory_path):
-            if filename.endswith(".pdf"):
-                # 날짜 패턴 찾기
-                match = re.search(r"(\d{4}-\d{2}-\d{2})__(\d{4}-\d{2}-\d{2})", filename)
-                if match:
-                    start_date = match.group(1)
-                    end_date = match.group(2)
-                    new_filename = f"{start_date} ~ {end_date}.pdf"
-
-                    old_path = os.path.join(directory_path, filename)
-                    new_path = os.path.join(directory_path, new_filename)
-
-                    if dry_run:
-                        print(f"[드라이 런] 변경될 예정: {filename} -> {new_filename}")
-                    else:
-                        # 파일명 변경
-                        os.rename(old_path, new_path)
-                        print(f"변경됨: {filename} -> {new_filename}")
 
     def merge_pdf(
         self,
@@ -81,12 +25,12 @@ class PDFTools:
         uniform_size: tuple[float, float] = (595.276, 841.89)
     ):
         """
-        스트림 기반으로 PDF를 빠르게 병합하는 함수, 페이지 크기를 통일시킴
+        A function to quickly merge PDFs based on streams, unifying page sizes
 
         Args:
-            pdf_files (list[str]): 병합할 PDF 파일 경로 리스트
-            output_path (str): 병합된 PDF의 출력 경로 (기본값: 'merged_output.pdf')
-            uniform_size (tuple[float, float]): 통일할 페이지 크기 (너비, 높이) in 포인트 (기본: A4)
+            pdf_files (list[str]): List of PDF file paths to merge
+            output_path (str): Output path for the merged PDF (default: 'merged_output.pdf')
+            uniform_size (tuple[float, float]): Uniform page size (width, height) in points (default: A4)
 
         Returns:
             None
@@ -95,56 +39,55 @@ class PDFTools:
             print("병합할 PDF 파일이 없습니다.")
             return
 
-        # 파일 존재 여부 일괄 확인
+        # Check file existence in batch
         missing_files = [f for f in pdf_files if not os.path.exists(f)]
         if missing_files:
-            raise FileNotFoundError(f"파일을 찾을 수 없습니다: {missing_files}")
+            raise FileNotFoundError(f"Files not found: {missing_files}")
 
         writer = PdfWriter()
 
         try:
             start_time = time.time()
 
-            # 스트림 기반으로 빠르게 병합, 페이지 크기 통일
+            # Quickly merge based on streams, unify page sizes
             total_files = len(pdf_files)
-            pbar = ProgressBar(total_files, "🔄 PDF 병합 중", "file", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}")
-            for pdf_file in pdf_files:
-                print(f"병합 중: {pdf_file}")
+            with ProgressBar(total_files, "🔄 Merging PDFs", "file", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}") as pbar:
+                for pdf_file in pdf_files:
+                    print(f"Merging: {pdf_file}")
 
-                with open(pdf_file, "rb") as f:
-                    reader = PdfReader(f)
+                    with open(pdf_file, "rb") as f:
+                        reader = PdfReader(f)
 
-                    # 각 페이지를 통일된 크기로 조정
-                    for page in reader.pages:
-                        # 페이지 크기 통일 (스케일링)
-                        page.scale_to(width=uniform_size[0], height=uniform_size[1])
-                        writer.add_page(page)
-                pbar.update(1)
-            pbar.close()
+                        # Adjust each page to uniform size
+                        for page in reader.pages:
+                            # Unify page size (scaling)
+                            page.scale_to(width=uniform_size[0], height=uniform_size[1])
+                            writer.add_page(page)
+                    pbar.update(1)
 
-            # 한 번에 쓰기
+            # Write at once
             with open(output_path, "wb") as output_file:
                 writer.write(output_file)
 
             elapsed_time = time.time() - start_time
-            print(f"✅ 병합 완료! 파일이 저장되었습니다: {output_path}")
-            print(f"⏱️ 소요 시간: {elapsed_time:.2f}초")
-            print(f"📐 페이지 크기 통일: {uniform_size[0]}x{uniform_size[1]} 포인트 (A4)")
+            print(f"✅ Merge completed! File saved at: {output_path}")
+            print(f"⏱️ Elapsed time: {elapsed_time:.2f}s")
+            print(f"📐 Page size unified: {uniform_size[0]}x{uniform_size[1]} points (A4)")
 
         except Exception as e:
-            print(f"❌ 병합 중 오류가 발생했습니다: {e}")
+            print(f"❌ Error occurred during merging: {e}")
 
     def compress_pdf(self, input_path: str, output_path: str = None, quality: str = "printer"):
         """
-        Ghostscript를 사용한 고성능 PDF 압축 함수 (진행바 포함)
+        High-performance PDF compression function using Ghostscript (with progress bar)
 
         Args:
-            input_path (str): 원본 PDF 파일 경로
-            output_path (str): 압축된 PDF 출력 경로 (None시 자동생성)
-            quality (str): 압축 품질 설정
+            input_path (str): Original PDF file path
+            output_path (str): Compressed PDF output path (auto-generated if None)
+            quality (str): Compression quality setting
 
         Returns:
-            tuple: (성공여부, 압축률, 메시지)
+            tuple: (success, compression_ratio, message)
         """
         if not os.path.exists(input_path):
             return False, 0, f"입력 파일이 존재하지 않습니다: {input_path}"
@@ -177,129 +120,126 @@ class PDFTools:
         try:
             start_time = time.time()
 
-            # 진행바 설정
-            pbar = ProgressBar(100, "🔄 PDF 압축 중", "%", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}")
+            # Set up progress bar
+            with ProgressBar(100, "🔄 Compressing PDF", "%", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}") as pbar:
+                # Run subprocess in a separate thread
+                process = subprocess.Popen(gs_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-            # subprocess를 별도 스레드에서 실행
-            process = subprocess.Popen(gs_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-            # 진행바 업데이트 (파일 크기 기반 추정)
-            while process.poll() is None:
-                # 출력 파일이 생성되기 시작하면 크기 확인
-                if os.path.exists(output_path):
-                    try:
-                        current_size = os.path.getsize(output_path)
-                        # 대략적인 진행률 계산 (압축률 고려)
-                        progress = min(95, (current_size / (original_size * 0.5)) * 100)
+                # Update progress bar (estimated based on file size)
+                while process.poll() is None:
+                    # Check size when output file starts to be created
+                    if os.path.exists(output_path):
+                        try:
+                            current_size = os.path.getsize(output_path)
+                            # Calculate approximate progress (considering compression ratio)
+                            progress = min(95, (current_size / (original_size * 0.5)) * 100)
+                            pbar.update(progress - pbar.pbar.n)
+                        except Exception:
+                            pass
+                    else:
+                        # Time-based progress if file not yet created
+                        elapsed = time.time() - start_time
+                        progress = min(30, elapsed * 10)  # Up to 30%
                         pbar.update(progress - pbar.pbar.n)
-                    except Exception:
-                        pass
-                else:
-                    # 파일이 아직 생성되지 않은 경우 시간 기반 진행
-                    elapsed = time.time() - start_time
-                    progress = min(30, elapsed * 10)  # 최대 30%까지
-                    pbar.update(progress - pbar.pbar.n)
 
-                time.sleep(0.1)
+                    time.sleep(0.1)
 
-            # 완료 처리
-            pbar.update(100 - pbar.pbar.n)
-            pbar.close()
+                # Completion processing
+                pbar.update(100 - pbar.pbar.n)
 
-            # 에러 확인
+            # Check for errors
             stdout, stderr = process.communicate()
             if process.returncode != 0:
-                return False, 0, f"Ghostscript 실행 오류: {stderr}"
+                return False, 0, f"Ghostscript execution error: {stderr}"
 
-            # 압축된 파일 크기
+            # Compressed file size
             compressed_size = os.path.getsize(output_path)
             compression_ratio = ((original_size - compressed_size) / original_size) * 100
 
             elapsed_time = time.time() - start_time
 
-            print("\n✅ PDF 압축 완료!")
-            print(f"📁 원본 크기: {original_size / 1024 / 1024:.2f} MB")
-            print(f"📦 압축 후: {compressed_size / 1024 / 1024:.2f} MB")
-            print(f"📉 압축률: {compression_ratio:.1f}% 감소")
-            print(f"⏱️ 소요 시간: {elapsed_time:.2f}초")
-            print(f"💾 저장 위치: {output_path}")
+            print("\n✅ PDF compression completed!")
+            print(f"📁 Original size: {original_size / 1024 / 1024:.2f} MB")
+            print(f"📦 After compression: {compressed_size / 1024 / 1024:.2f} MB")
+            print(f"📉 Compression ratio: {compression_ratio:.1f}% reduction")
+            print(f"⏱️ Elapsed time: {elapsed_time:.2f}s")
+            print(f"💾 Saved at: {output_path}")
 
-            return True, compression_ratio, "압축 성공"
+            return True, compression_ratio, "Compression successful"
 
         except subprocess.CalledProcessError as e:
-            return False, 0, f"Ghostscript 실행 오류: {e}"
+            return False, 0, f"Ghostscript execution error: {e}"
         except Exception as e:
-            return False, 0, f"압축 중 오류: {e}"
+            return False, 0, f"Error during compression: {e}"
 
     def image_to_pdf(self, image_files: list[str], rotate: list[tuple[int, int]] = [], output_path: str = "output.pdf"):
         """
-        이미지 파일들을 PDF로 변환하는 함수 (JPEG, PNG 등 지원)
+        Function to convert image files to PDF (supports JPEG, PNG, etc.)
 
         Args:
-            image_files (list[str]): 이미지 파일 경로의 리스트 (JPEG, PNG 등)
-            rotate (list[tuple[int, int]]): (이미지 파일의 인덱스, 회전 각도) 튜플의 리스트
-            output_path (str): 출력 PDF 파일 경로 (기본값: 'output.pdf')
+            image_files (list[str]): List of image file paths (JPEG, PNG, etc.)
+            rotate (list[tuple[int, int]]): List of tuples (image file index, rotation angle)
+            output_path (str): Output PDF file path (default: 'output.pdf')
 
         Returns:
             None
         """
         try:
             images = []
-            # 회전 딕셔너리로 변환 (인덱스: 회전 각도)
+            # Convert to rotation dictionary (index: rotation angle)
             rotate_dict = {idx: angle for idx, angle in rotate}
 
             total_images = len(image_files)
-            pbar = ProgressBar(total_images, "🔄 이미지를 PDF로 변환 중", "image", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}")
-            for i, file_path in enumerate(image_files):
-                # 이미지 파일 열기 (PIL이 지원하는 형식)
-                img = Image.open(file_path)
+            with ProgressBar(total_images, "🔄 Converting images to PDF", "image", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}") as pbar:
+                for i, file_path in enumerate(image_files):
+                    # Open image file (format supported by PIL)
+                    img = Image.open(file_path)
 
-                # 회전 필요하면 수행
-                if i in rotate_dict:
-                    angle = rotate_dict[i]
-                    # 시계 반대 방향으로 회전 (PIL 기본)
-                    img = img.rotate(angle, expand=True)  # expand=True로 크기 자동조절
+                    # Perform rotation if needed
+                    if i in rotate_dict:
+                        angle = rotate_dict[i]
+                        # Rotate counterclockwise (PIL default)
+                        img = img.rotate(angle, expand=True)  # Auto-adjust size with expand=True
 
-                # RGB 모드로 변환 (PDF 저장시 필요)
-                if img.mode != "RGB":
-                    img = img.convert("RGB")
+                    # Convert to RGB mode (required for PDF saving)
+                    if img.mode != "RGB":
+                        img = img.convert("RGB")
 
-                images.append(img)
-                pbar.update(1)
-            pbar.close()
+                    images.append(img)
+                    pbar.update(1)
 
-            # 첫 이미지를 기준으로 나머지를 추가하여 PDF 저장
+            # Save as PDF by appending the rest based on the first image
             if images:
                 images[0].save(output_path, save_all=True, append_images=images[1:])
-                print(f"PDF 파일이 생성되었습니다: {output_path}")
+                print(f"PDF file created: {output_path}")
             else:
-                print("입력된 이미지 파일이 없습니다.")
+                print("No input image files.")
 
         except FileNotFoundError as e:
-            print(f"파일을 찾을 수 없습니다: {e}")
+            print(f"File not found: {e}")
         except Exception as e:
             print(f"오류가 발생했습니다: {e}")
 
     def pdf_to_image(self, pdf_paths: list[str], output_folder: Optional[str] = None, dpi: int = 200, format: str = "png"):
         """
-        PDF 파일들을 이미지로 변환하는 함수
+        Function to convert PDF files to images
 
         Args:
-            pdf_paths (list[str]): 변환할 PDF 파일 경로 리스트
-            output_folder (str): 이미지가 저장될 기본 폴더 경로 (None시 각 PDF별 폴더 자동 생성)
-            dpi (int): 변환 시 해상도 (기본값: 200)
-            format (str): 출력 이미지 형식 (기본값: 'png')
+            pdf_paths (list[str]): List of PDF file paths to convert
+            output_folder (str): Base folder path where images will be saved (auto-generate per PDF if None)
+            dpi (int): Resolution during conversion (default: 200)
+            format (str): Output image format (default: 'png')
 
         Returns:
-            dict: 각 PDF에 대한 생성된 이미지 파일 경로 리스트 딕셔너리
+            dict: Dictionary of generated image file path lists for each PDF
         """
         results = {}
         for pdf_path in pdf_paths:
             if not os.path.exists(pdf_path):
-                print(f"❌ PDF 파일을 찾을 수 없습니다: {pdf_path}")
+                print(f"❌ PDF file not found: {pdf_path}")
                 continue
 
-            # 각 PDF에 대한 출력 폴더 결정
+            # Determine output folder for each PDF
             if output_folder is None:
                 pdf_folder = os.path.splitext(pdf_path)[0] + "_images"
             else:
@@ -310,42 +250,45 @@ class PDFTools:
                 os.makedirs(pdf_folder)
 
             try:
-                # PDF를 이미지로 변환
+                # Convert PDF to images
                 images = convert_from_path(pdf_path, dpi=dpi, use_pdftocairo=True)
                 image_paths = []
 
-                pbar = ProgressBar(len(images), f"🔄 {os.path.basename(pdf_path)} 변환 중", "page", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}")
-                for i, image in enumerate(images):
-                    image_path = os.path.join(pdf_folder, f"page_{i + 1}.{format}")
-                    image.save(image_path, format.upper())
-                    image_paths.append(image_path)
-                    pbar.update(1)
-                pbar.close()
+                with ProgressBar(
+                    len(images), f"🔄 Converting {os.path.basename(pdf_path)}", "page", "{desc}: {percentage:3.0f}%|{bar}| {elapsed}"
+                ) as pbar:
+                    for i, image in enumerate(images):
+                        image_path = os.path.join(pdf_folder, f"page_{i + 1}.{format}")
+                        image.save(image_path, format.upper())
+                        image_paths.append(image_path)
+                        pbar.update(1)
 
                 results[pdf_path] = image_paths
-                print(f"✅ {os.path.basename(pdf_path)}가 {format.upper()} 이미지로 변환되었습니다. 총 {len(image_paths)}장 생성됨. 폴더: {pdf_folder}")
+                print(
+                    f"✅ {os.path.basename(pdf_path)} converted to {format.upper()} images. Total {len(image_paths)} images created. Folder: {pdf_folder}"
+                )
 
             except Exception as e:
-                print(f"❌ {os.path.basename(pdf_path)} 변환 중 오류가 발생했습니다: {e}")
+                print(f"❌ Error occurred during conversion of {os.path.basename(pdf_path)}: {e}")
                 results[pdf_path] = []
 
         return results
 
 
-# 사용 예시
+# Usage examples
 if __name__ == "__main__":
     tools = PDFTools()
 
-    # 예시: PDF 병합
+    # Example: PDF merging
     # pdf_list = tools.get_ext_files("/path/to/pdfs", ".pdf")
     # tools.merge_pdf(pdf_list, "merged.pdf")
 
-    # 예시: PDF 압축
+    # Example: PDF compression
     # tools.compress_pdf("input.pdf", "output.pdf")
 
-    # 예시: 이미지에서 PDF 생성
+    # Example: Create PDF from images
     # image_files = ["image1.jpg", "image2.png"]
     # tools.image_to_pdf(image_files, output_path="output.pdf")
 
-    # 예시: PDF에서 이미지 변환
+    # Example: Convert PDF to images
     # tools.pdf_to_image("input.pdf", "./images", dpi=300)
