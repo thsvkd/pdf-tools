@@ -121,6 +121,19 @@ def pdf_to_image(pdf, output, dpi, format):
 
 
 @cli.command()
+def gui():
+    """Launch the PDF Tools GUI application"""
+    try:
+        from .gui.app import main as gui_main
+        gui_main()
+    except ImportError as e:
+        click.echo(f"❌ GUI dependencies not available: {e}")
+        click.echo("Please install PyQt6: pip install PyQt6")
+    except Exception as e:
+        click.echo(f"❌ Failed to launch GUI: {e}")
+
+
+@cli.command()
 @click.option("--shell", type=click.Choice(["bash", "zsh", "fish"]), help="Shell type (if not specified, auto-detect)")
 def completion(shell):
     """Setup shell completion for pdf-tools"""
