@@ -4,7 +4,7 @@ Main GUI application entry point
 
 import sys
 
-from PyQt6.QtWidgets import QApplication
+import flet as ft
 
 from .main_window import MainWindow
 
@@ -18,21 +18,26 @@ class PDFToolsGUI:
 
     def run(self):
         """Run the GUI application"""
-        self.app = QApplication(sys.argv)
-        self.app.setApplicationName("PDF Tools")
-        self.app.setApplicationVersion("0.1.0")
-        self.app.setOrganizationName("thsvkd")
+        ft.app(target=self._main, name="pdf-tools", assets_dir=None)
 
-        self.main_window = MainWindow()
-        self.main_window.show()
+    def _main(self, page: ft.Page):
+        """Main function for Flet app"""
+        page.title = "PDF Tools"
+        page.vertical_alignment = ft.MainAxisAlignment.START
+        page.scroll = ft.ScrollMode.AUTO
+        page.window.width = 800
+        page.window.height = 600
+        page.window.min_width = 600
+        page.window.min_height = 500
 
-        return self.app.exec()
+        self.main_window = MainWindow(page)
+        page.add(self.main_window)
 
 
 def main():
     """Entry point for GUI application"""
     gui = PDFToolsGUI()
-    sys.exit(gui.run())
+    gui.run()
 
 
 if __name__ == "__main__":
