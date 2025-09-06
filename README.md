@@ -9,7 +9,7 @@ Professional PDF processing tool collection with CLI and GUI interfaces
 - **Convert**: Unified conversion between PDF and images
   - PDF to images (PNG, JPG, etc.)
   - Images to PDF
-- **GUI Application**: User-friendly PyQt6 interface
+- **GUI Application**: User-friendly Flet interface
 - **Shell Completion**: Auto-completion for bash, zsh, and fish
 - **Development Tools**: Pre-commit hooks for code quality
 
@@ -46,7 +46,7 @@ pip install .
 - click
 - coloredlogs
 - python-dotenv
-- PyQt6
+- flet
 
 ### Development Dependencies
 
@@ -101,7 +101,7 @@ pdf-tools convert doc1.pdf doc2.pdf --from pdf --to image --format jpg --dpi 300
 pdf-tools gui
 ```
 
-Launches a user-friendly graphical interface with tabs for merge, compress, and convert operations.
+Launches a user-friendly graphical interface with tabs for merge, compress, and convert operations. The GUI is built with Flet, providing cross-platform support for web, desktop, and mobile.
 
 #### Shell Completion
 
@@ -151,7 +151,7 @@ ruff check .
 pdf-tools/
 ├── pdf_tools/           # Main package
 │   ├── common/         # Shared utilities and enums
-│   ├── gui/           # PyQt6 GUI application
+│   ├── gui/           # Flet GUI application
 │   └── __main__.py    # CLI entry point
 ├── scripts/           # Development scripts
 ├── pyproject.toml     # Project configuration
