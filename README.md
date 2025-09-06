@@ -23,6 +23,9 @@ uv tool install .
 
 # Development installation
 uv sync --extra dev
+
+# Install GUI dependencies (Linux)
+sudo apt install -y libmpv2
 ```
 
 ### Using pip
@@ -33,6 +36,9 @@ pip install -e .
 
 # Production installation
 pip install .
+
+# Install GUI dependencies (Linux)
+sudo apt install -y libmpv2
 ```
 
 ## Dependencies
@@ -46,7 +52,20 @@ pip install .
 - click
 - coloredlogs
 - python-dotenv
-- flet
+- flet (>=0.28.3)
+- flet-desktop (>=0.28.3)
+
+### System Dependencies (for GUI)
+
+**Linux (Ubuntu/Debian):**
+
+```bash
+# Required for Flet desktop GUI
+sudo apt update
+sudo apt install -y libmpv2
+```
+
+**Note**: The GUI requires `libmpv` for multimedia support. The installation script automatically creates necessary symbolic links if needed.
 
 ### Development Dependencies
 
@@ -103,6 +122,21 @@ pdf-tools gui
 
 Launches a user-friendly graphical interface with tabs for merge, compress, and convert operations. The GUI is built with Flet, providing cross-platform support for web, desktop, and mobile.
 
+**Troubleshooting GUI Issues:**
+
+If you encounter errors like "No module named 'flet_desktop'" or "libmpv.so.1: cannot open shared object file":
+
+```bash
+# Install missing dependencies
+uv add flet-desktop
+
+# Install system dependencies (Linux)
+sudo apt install -y libmpv2
+
+# Create symbolic link if needed (Linux)
+sudo ln -sf /usr/lib/x86_64-linux-gnu/libmpv.so.2 /usr/lib/x86_64-linux-gnu/libmpv.so.1
+```
+
 #### Shell Completion
 
 ```bash
@@ -130,6 +164,10 @@ ruff check .
 ```
 
 ## Notes
+
+- **GUI Dependencies**: The GUI requires system-level dependencies:
+  - **Linux**: `libmpv2` package is required for Flet desktop GUI
+  - **Windows/macOS**: No additional system dependencies required
 
 - **Korean Font Support**: Korean fonts are required for Korean PDF conversion. Install with:
 
