@@ -13,7 +13,7 @@
       "args": ["--help"]
     },
     {
-      "name": "Run pdf_tools (merge)",
+      "name": "Run pdf_tools (cli) (merge)",
       "type": "debugpy",
       "request": "launch",
       "module": "pdf_tools",
@@ -23,7 +23,7 @@
       ]
     },
     {
-      "name": "Run pdf_tools (compress)",
+      "name": "Run pdf_tools (cli) (compress)",
       "type": "debugpy",
       "request": "launch",
       "module": "pdf_tools",
@@ -33,23 +33,19 @@
       ]
     },
     {
-      "name": "Run pdf_tools (image-to-pdf)",
+      "name": "Run pdf_tools (cli) (convert)",
       "type": "debugpy",
       "request": "launch",
       "module": "pdf_tools",
       "console": "integratedTerminal",
       "args": [
-        "image-to-pdf",
-      ]
-    },
-    {
-      "name": "Run pdf_tools (pdf-to-image)",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "pdf_tools",
-      "console": "integratedTerminal",
-      "args": [
-        "pdf-to-image",
+        "convert",
+        "--from",
+        "pdf",
+        "--to",
+        "image",
+        "--output",
+        "test_output"
       ]
     },
     {

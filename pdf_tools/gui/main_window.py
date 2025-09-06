@@ -52,16 +52,21 @@ class WorkerThread(QThread):
                 self.pdf_tools.merge_pdf(*self.args, **self.kwargs)
             elif self.operation == "compress":
                 self.pdf_tools.compress_pdf(*self.args, **self.kwargs)
-            elif self.operation == "image_to_pdf":
-                self.pdf_tools.image_to_pdf(*self.args, **self.kwargs)
-            elif self.operation == "pdf_to_image":
-                self.pdf_tools.pdf_to_image(*self.args, **self.kwargs)
+            elif self.operation == "convert":
+                self._run_convert(*self.args, **self.kwargs)
 
             self.finished.emit("Operation completed successfully!")
 
         except Exception as e:
             logger.error(f"Operation failed: {e}")
             self.error.emit(str(e))
+
+    def _run_convert(self, files, from_format, to_format, output_format, output, dpi, rotate_list):
+        """Run convert operation"""
+        if from_format == "image" and to_format == "pdf":
+            self.pdf_tools.image_to_pdf(files, rotate_list, output)
+        elif from_format == "pdf" and to_format == "image":
+            self.pdf_tools.pdf_to_image(files, output, dpi, output_format)
 
 
 class MainWindow(QMainWindow):
@@ -100,8 +105,7 @@ class MainWindow(QMainWindow):
         # Create tabs
         self.create_merge_tab()
         self.create_compress_tab()
-        self.create_image_to_pdf_tab()
-        self.create_pdf_to_image_tab()
+        self.create_convert_tab()
 
         # Status bar
         self.statusBar().showMessage("Ready")
@@ -212,117 +216,6 @@ class MainWindow(QMainWindow):
 
         self.tab_widget.addTab(tab, "Compress PDF")
 
-    def create_image_to_pdf_tab(self):
-        """Create the image to PDF tab"""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-
-        # Image files group
-        image_group = QGroupBox("Select Image Files")
-        image_layout = QVBoxLayout(image_group)
-
-        self.image_file_list = QListWidget()
-        image_layout.addWidget(self.image_file_list)
-
-        button_layout = QHBoxLayout()
-        add_images_btn = QPushButton("Add Images")
-        add_images_btn.clicked.connect(self.add_image_files)
-        remove_image_btn = QPushButton("Remove Selected")
-        remove_image_btn.clicked.connect(self.remove_image_file)
-        clear_images_btn = QPushButton("Clear All")
-        clear_images_btn.clicked.connect(self.clear_image_files)
-
-        button_layout.addWidget(add_images_btn)
-        button_layout.addWidget(remove_image_btn)
-        button_layout.addWidget(clear_images_btn)
-        image_layout.addLayout(button_layout)
-
-        layout.addWidget(image_group)
-
-        # Output settings group
-        output_group = QGroupBox("Output Settings")
-        output_layout = QFormLayout(output_group)
-
-        self.image_to_pdf_output_edit = QLineEdit("output.pdf")
-        output_browse_btn = QPushButton("Browse...")
-        output_browse_btn.clicked.connect(self.browse_image_to_pdf_output)
-
-        output_path_layout = QHBoxLayout()
-        output_path_layout.addWidget(self.image_to_pdf_output_edit)
-        output_path_layout.addWidget(output_browse_btn)
-
-        output_layout.addRow("Output PDF:", output_path_layout)
-        layout.addWidget(output_group)
-
-        # Progress bar
-        self.image_to_pdf_progress = QProgressBar()
-        self.image_to_pdf_progress.setVisible(False)
-        layout.addWidget(self.image_to_pdf_progress)
-
-        # Convert button
-        self.image_to_pdf_btn = QPushButton("Convert to PDF")
-        self.image_to_pdf_btn.clicked.connect(self.convert_images_to_pdf)
-        layout.addWidget(self.image_to_pdf_btn)
-
-        self.tab_widget.addTab(tab, "Images to PDF")
-
-    def create_pdf_to_image_tab(self):
-        """Create the PDF to image tab"""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-
-        # Input file group
-        input_group = QGroupBox("Input PDF File")
-        input_layout = QFormLayout(input_group)
-
-        self.pdf_to_image_input_edit = QLineEdit()
-        input_browse_btn = QPushButton("Browse...")
-        input_browse_btn.clicked.connect(self.browse_pdf_to_image_input)
-
-        input_layout_h = QHBoxLayout()
-        input_layout_h.addWidget(self.pdf_to_image_input_edit)
-        input_layout_h.addWidget(input_browse_btn)
-
-        input_layout.addRow("PDF File:", input_layout_h)
-        layout.addWidget(input_group)
-
-        # Settings group
-        settings_group = QGroupBox("Conversion Settings")
-        settings_layout = QFormLayout(settings_group)
-
-        self.dpi_spinbox = QSpinBox()
-        self.dpi_spinbox.setMinimum(50)
-        self.dpi_spinbox.setMaximum(600)
-        self.dpi_spinbox.setValue(200)
-        settings_layout.addRow("DPI:", self.dpi_spinbox)
-
-        self.format_combo = QComboBox()
-        self.format_combo.addItems(["png", "jpg", "jpeg", "tiff", "bmp"])
-        settings_layout.addRow("Format:", self.format_combo)
-
-        self.pdf_to_image_output_edit = QLineEdit()
-        output_browse_btn = QPushButton("Browse...")
-        output_browse_btn.clicked.connect(self.browse_pdf_to_image_output)
-
-        output_layout_h = QHBoxLayout()
-        output_layout_h.addWidget(self.pdf_to_image_output_edit)
-        output_layout_h.addWidget(output_browse_btn)
-
-        settings_layout.addRow("Output Folder:", output_layout_h)
-        layout.addWidget(settings_group)
-
-        # Progress bar
-        self.pdf_to_image_progress = QProgressBar()
-        self.pdf_to_image_progress.setVisible(False)
-        layout.addWidget(self.pdf_to_image_progress)
-
-        # Convert button
-        self.pdf_to_image_btn = QPushButton("Convert to Images")
-        self.pdf_to_image_btn.clicked.connect(self.convert_pdf_to_images)
-        layout.addWidget(self.pdf_to_image_btn)
-
-        self.tab_widget.addTab(tab, "PDF to Images")
-
     # File selection methods
     def add_merge_files(self):
         """Add PDF files for merging"""
@@ -361,49 +254,6 @@ class MainWindow(QMainWindow):
         file, _ = QFileDialog.getSaveFileName(self, "Save Compressed PDF", "", "PDF Files (*.pdf)")
         if file:
             self.compress_output_edit.setText(file)
-
-    def add_image_files(self):
-        """Add image files for PDF conversion"""
-        files, _ = QFileDialog.getOpenFileNames(
-            self,
-            "Select Image Files",
-            "",
-            "Image Files (*.png *.jpg *.jpeg *.tiff *.bmp *.gif)",
-        )
-        for file in files:
-            self.image_file_list.addItem(file)
-
-    def remove_image_file(self):
-        """Remove selected image file"""
-        current_row = self.image_file_list.currentRow()
-        if current_row >= 0:
-            self.image_file_list.takeItem(current_row)
-
-    def clear_image_files(self):
-        """Clear all image files"""
-        self.image_file_list.clear()
-
-    def browse_image_to_pdf_output(self):
-        """Browse for image to PDF output file"""
-        file, _ = QFileDialog.getSaveFileName(self, "Save PDF", "", "PDF Files (*.pdf)")
-        if file:
-            self.image_to_pdf_output_edit.setText(file)
-
-    def browse_pdf_to_image_input(self):
-        """Browse for PDF to image input file"""
-        file, _ = QFileDialog.getOpenFileName(self, "Select PDF File", "", "PDF Files (*.pdf)")
-        if file:
-            self.pdf_to_image_input_edit.setText(file)
-            # Auto-set output folder
-            path = Path(file)
-            output_folder = path.parent / f"{path.stem}_images"
-            self.pdf_to_image_output_edit.setText(str(output_folder))
-
-    def browse_pdf_to_image_output(self):
-        """Browse for PDF to image output folder"""
-        folder = QFileDialog.getExistingDirectory(self, "Select Output Folder")
-        if folder:
-            self.pdf_to_image_output_edit.setText(folder)
 
     # Processing methods
     def merge_pdfs(self):
@@ -452,52 +302,6 @@ class MainWindow(QMainWindow):
             quality,
             progress_bar=self.compress_progress,
             button=self.compress_btn,
-        )
-
-    def convert_images_to_pdf(self):
-        """Start image to PDF conversion"""
-        if self.image_file_list.count() == 0:
-            QMessageBox.warning(self, "Warning", "Please select image files.")
-            return
-
-        output_file = self.image_to_pdf_output_edit.text()
-        if not output_file:
-            QMessageBox.warning(self, "Warning", "Please specify output PDF file.")
-            return
-
-        # Get image list
-        images = []
-        for i in range(self.image_file_list.count()):
-            images.append(self.image_file_list.item(i).text())
-
-        self.start_operation(
-            "image_to_pdf",
-            images,
-            [],
-            output_file,
-            progress_bar=self.image_to_pdf_progress,
-            button=self.image_to_pdf_btn,
-        )
-
-    def convert_pdf_to_images(self):
-        """Start PDF to images conversion"""
-        input_file = self.pdf_to_image_input_edit.text()
-        output_folder = self.pdf_to_image_output_edit.text()
-        dpi = self.dpi_spinbox.value()
-        format_type = self.format_combo.currentText()
-
-        if not input_file:
-            QMessageBox.warning(self, "Warning", "Please select input PDF file.")
-            return
-
-        self.start_operation(
-            "pdf_to_image",
-            [input_file],
-            output_folder,
-            dpi,
-            format_type,
-            progress_bar=self.pdf_to_image_progress,
-            button=self.pdf_to_image_btn,
         )
 
     def start_operation(self, operation, *args, progress_bar=None, button=None, **kwargs):
@@ -553,7 +357,183 @@ class MainWindow(QMainWindow):
             button.setText("Merge PDFs")
         elif button == self.compress_btn:
             button.setText("Compress PDF")
-        elif button == self.image_to_pdf_btn:
-            button.setText("Convert to PDF")
-        elif button == self.pdf_to_image_btn:
-            button.setText("Convert to Images")
+        elif button == self.convert_btn:
+            button.setText("Convert Files")
+
+    # Convert tab methods
+    def add_convert_files(self):
+        """Add files for conversion"""
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.FileMode.ExistingFiles)
+
+        from_format = self.convert_from_combo.currentText()
+        if from_format == "pdf":
+            file_dialog.setNameFilter("PDF files (*.pdf)")
+        else:
+            file_dialog.setNameFilter("Image files (*.png *.jpg *.jpeg *.bmp *.tiff *.webp)")
+
+        if file_dialog.exec():
+            files = file_dialog.selectedFiles()
+            for file in files:
+                self.convert_file_list.addItem(file)
+
+    def remove_convert_file(self):
+        """Remove selected file from convert list"""
+        current_row = self.convert_file_list.currentRow()
+        if current_row >= 0:
+            self.convert_file_list.takeItem(current_row)
+
+    def clear_convert_files(self):
+        """Clear all files from convert list"""
+        self.convert_file_list.clear()
+
+    def browse_convert_output(self):
+        """Browse for convert output location"""
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.FileMode.AnyFile)
+
+        to_format = self.convert_to_combo.currentText()
+        if to_format == "pdf":
+            file_dialog.setNameFilter("PDF files (*.pdf)")
+            default_name = "converted_output.pdf"
+        else:
+            output_format = self.convert_output_format_combo.currentText()
+            file_dialog.setNameFilter(f"{output_format.upper()} files (*.{output_format})")
+            default_name = f"converted_output.{output_format}"
+
+        file_dialog.selectFile(default_name)
+
+        if file_dialog.exec():
+            selected_file = file_dialog.selectedFiles()[0]
+            # Remove extension to get base name
+            base_name = Path(selected_file).stem
+            self.convert_output_edit.setText(base_name)
+
+    def convert_files(self):
+        """Convert files"""
+        files = []
+        for i in range(self.convert_file_list.count()):
+            files.append(self.convert_file_list.item(i).text())
+
+        if not files:
+            QMessageBox.warning(self, "No Files", "Please select files to convert.")
+            return
+
+        from_format = self.convert_from_combo.currentText()
+        to_format = self.convert_to_combo.currentText()
+        output_format = self.convert_output_format_combo.currentText()
+        output_base = self.convert_output_edit.text()
+        dpi = self.convert_dpi_spin.value()
+
+        if not output_base:
+            QMessageBox.warning(self, "No Output", "Please specify output base name.")
+            return
+
+        # Generate output filename
+        if to_format == "pdf":
+            output_file = f"{output_base}.pdf"
+        else:
+            output_file = f"{output_base}.{output_format}"
+
+        # Start conversion
+        self.convert_progress.setVisible(True)
+        self.convert_btn.setText("Converting...")
+        self.convert_btn.setEnabled(False)
+
+        self.worker_thread = WorkerThread(
+            "convert",
+            files,
+            from_format,
+            to_format,
+            output_format,
+            output_file,
+            dpi,
+            [],  # rotate_list (not implemented in GUI yet)
+        )
+        self.worker_thread.progress.connect(self.convert_progress.setValue)
+        self.worker_thread.finished.connect(
+            lambda msg: self.on_operation_finished(msg, self.convert_progress, self.convert_btn)
+        )
+        self.worker_thread.error.connect(
+            lambda err: self.on_operation_error(err, self.convert_progress, self.convert_btn)
+        )
+        self.worker_thread.start()
+
+    def create_convert_tab(self):
+        """Create the convert tab"""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+
+        # File selection group
+        file_group = QGroupBox("Select Files")
+        file_layout = QVBoxLayout(file_group)
+
+        self.convert_file_list = QListWidget()
+        file_layout.addWidget(self.convert_file_list)
+
+        button_layout = QHBoxLayout()
+        add_files_btn = QPushButton("Add Files")
+        add_files_btn.clicked.connect(self.add_convert_files)
+        remove_file_btn = QPushButton("Remove Selected")
+        remove_file_btn.clicked.connect(self.remove_convert_file)
+        clear_files_btn = QPushButton("Clear All")
+        clear_files_btn.clicked.connect(self.clear_convert_files)
+
+        button_layout.addWidget(add_files_btn)
+        button_layout.addWidget(remove_file_btn)
+        button_layout.addWidget(clear_files_btn)
+        file_layout.addLayout(button_layout)
+
+        layout.addWidget(file_group)
+
+        # Conversion settings group
+        settings_group = QGroupBox("Conversion Settings")
+        settings_layout = QFormLayout(settings_group)
+
+        # From format
+        self.convert_from_combo = QComboBox()
+        self.convert_from_combo.addItems(["pdf", "image"])
+        self.convert_from_combo.setCurrentText("pdf")
+        settings_layout.addRow("From:", self.convert_from_combo)
+
+        # To format
+        self.convert_to_combo = QComboBox()
+        self.convert_to_combo.addItems(["pdf", "image"])
+        self.convert_to_combo.setCurrentText("image")
+        settings_layout.addRow("To:", self.convert_to_combo)
+
+        # Output format (for PDF to image)
+        self.convert_output_format_combo = QComboBox()
+        self.convert_output_format_combo.addItems(["png", "jpg", "jpeg", "bmp", "tiff", "webp"])
+        self.convert_output_format_combo.setCurrentText("png")
+        settings_layout.addRow("Image Format:", self.convert_output_format_combo)
+
+        # DPI
+        self.convert_dpi_spin = QSpinBox()
+        self.convert_dpi_spin.setRange(72, 600)
+        self.convert_dpi_spin.setValue(200)
+        settings_layout.addRow("DPI:", self.convert_dpi_spin)
+
+        # Output file
+        self.convert_output_edit = QLineEdit("converted_output")
+        output_browse_btn = QPushButton("Browse...")
+        output_browse_btn.clicked.connect(self.browse_convert_output)
+
+        output_layout = QHBoxLayout()
+        output_layout.addWidget(self.convert_output_edit)
+        output_layout.addWidget(output_browse_btn)
+
+        settings_layout.addRow("Output Base Name:", output_layout)
+        layout.addWidget(settings_group)
+
+        # Progress bar
+        self.convert_progress = QProgressBar()
+        self.convert_progress.setVisible(False)
+        layout.addWidget(self.convert_progress)
+
+        # Convert button
+        self.convert_btn = QPushButton("Convert Files")
+        self.convert_btn.clicked.connect(self.convert_files)
+        layout.addWidget(self.convert_btn)
+
+        self.tab_widget.addTab(tab, "Convert")

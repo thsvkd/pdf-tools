@@ -18,7 +18,7 @@ dependencies = [
     "PyQt6",
     "pre-commit",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [project.scripts]
 pdf-tools = "pdf_tools.__main__:main"
@@ -31,7 +31,7 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["pdf_tools"]
+include = ["pdf_tools*"]
 exclude = []
 
 [tool.ruff]

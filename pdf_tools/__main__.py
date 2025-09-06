@@ -7,6 +7,7 @@ import click
 import coloredlogs
 from dotenv import load_dotenv
 
+from .common.enums import ConversionType, FormatType
 from .common.pdf_tools import PDFTools
 
 
@@ -96,28 +97,52 @@ def compress(input, output, quality):
 
 
 @cli.command()
-@click.argument("images", nargs=-1)
-@click.option("--output", "-o", default="output.pdf", help="Output PDF")
-@click.option("--rotate", multiple=True, help="Rotate list (format: idx,angle)")
-def image_to_pdf(images, output, rotate):
-    """Convert images to PDF"""
-    rotate_list = []
-    for r in rotate:
-        idx, angle = map(int, r.split(","))
-        rotate_list.append((idx, angle))
+@click.argument("files", nargs=-1)
+@click.option(
+    "--from",
+    "from_format",
+    type=click.Choice([e.value for e in ConversionType]),
+    required=True,
+    help="Source format type",
+)
+@click.option(
+    "--to", "to_format", type=click.Choice([e.value for e in ConversionType]), required=True, help="Target format type"
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice([e.value for e in FormatType]),
+    default="png",
+    help="Output image format (for PDF to image conversion)",
+)
+@click.option("--output", "-o", required=True, help="Output file/folder base name")
+@click.option("--dpi", type=int, default=200, help="DPI (for PDF to image conversion)")
+@click.option("--rotate", multiple=True, help="Rotate list (format: idx,angle) - for image to PDF conversion")
+def convert(files, from_format, to_format, output_format, output, dpi, rotate):
+    """Convert between PDF and images"""
     tools = PDFTools()
-    tools.image_to_pdf(list(images), rotate_list, output)
 
+    # Determine conversion direction
+    if from_format == ConversionType.IMAGE.value and to_format == ConversionType.PDF.value:
+        # Image to PDF conversion
+        rotate_list = []
+        for r in rotate:
+            idx, angle = map(int, r.split(","))
+            rotate_list.append((idx, angle))
 
-@cli.command()
-@click.argument("pdf", nargs=-1)
-@click.option("--output", "-o", help="Output folder (if not specified, creates folder per PDF)")
-@click.option("--dpi", type=int, default=200, help="DPI")
-@click.option("--format", default="png", help="Image format")
-def pdf_to_image(pdf, output, dpi, format):
-    """Convert PDF to images"""
-    tools = PDFTools()
-    tools.pdf_to_image(list(pdf), output, dpi, format)
+        output_file = f"{output}.{FormatType.PDF.value}"
+        tools.image_to_pdf(list(files), rotate_list, output_file)
+        click.echo(f"✅ Converted images to PDF: {output_file}")
+
+    elif from_format == ConversionType.PDF.value and to_format == ConversionType.IMAGE.value:
+        # PDF to Image conversion
+        output_file = f"{output}.{output_format}"
+        tools.pdf_to_image(list(files), output_file, dpi, output_format)
+        click.echo(f"✅ Converted PDF to {output_format}: {output_file}")
+
+    else:
+        click.echo("❌ Invalid conversion combination")
+        return
 
 
 @cli.command()
