@@ -9,7 +9,7 @@ Professional PDF processing tool collection with CLI and GUI interfaces
 - **Convert**: Unified conversion between PDF and images
   - PDF to images (PNG, JPG, etc.)
   - Images to PDF
-- **GUI Application**: User-friendly PyQt6 interface
+- **GUI Application**: User-friendly Flet interface
 - **Shell Completion**: Auto-completion for bash, zsh, and fish
 - **Development Tools**: Pre-commit hooks for code quality
 
@@ -23,6 +23,9 @@ uv tool install .
 
 # Development installation
 uv sync --extra dev
+
+# Install GUI dependencies (Linux)
+sudo apt install -y libmpv2
 ```
 
 ### Using pip
@@ -33,6 +36,9 @@ pip install -e .
 
 # Production installation
 pip install .
+
+# Install GUI dependencies (Linux)
+sudo apt install -y libmpv2
 ```
 
 ## Dependencies
@@ -46,7 +52,20 @@ pip install .
 - click
 - coloredlogs
 - python-dotenv
-- PyQt6
+- flet (>=0.28.3)
+- flet-desktop (>=0.28.3)
+
+### System Dependencies (for GUI)
+
+**Linux (Ubuntu/Debian):**
+
+```bash
+# Required for Flet desktop GUI
+sudo apt update
+sudo apt install -y libmpv2
+```
+
+**Note**: The GUI requires `libmpv` for multimedia support. The installation script automatically creates necessary symbolic links if needed.
 
 ### Development Dependencies
 
@@ -101,7 +120,22 @@ pdf-tools convert doc1.pdf doc2.pdf --from pdf --to image --format jpg --dpi 300
 pdf-tools gui
 ```
 
-Launches a user-friendly graphical interface with tabs for merge, compress, and convert operations.
+Launches a user-friendly graphical interface with tabs for merge, compress, and convert operations. The GUI is built with Flet, providing cross-platform support for web, desktop, and mobile.
+
+**Troubleshooting GUI Issues:**
+
+If you encounter errors like "No module named 'flet_desktop'" or "libmpv.so.1: cannot open shared object file":
+
+```bash
+# Install missing dependencies
+uv add flet-desktop
+
+# Install system dependencies (Linux)
+sudo apt install -y libmpv2
+
+# Create symbolic link if needed (Linux)
+sudo ln -sf /usr/lib/x86_64-linux-gnu/libmpv.so.2 /usr/lib/x86_64-linux-gnu/libmpv.so.1
+```
 
 #### Shell Completion
 
@@ -131,6 +165,10 @@ ruff check .
 
 ## Notes
 
+- **GUI Dependencies**: The GUI requires system-level dependencies:
+  - **Linux**: `libmpv2` package is required for Flet desktop GUI
+  - **Windows/macOS**: No additional system dependencies required
+
 - **Korean Font Support**: Korean fonts are required for Korean PDF conversion. Install with:
 
   ```bash
@@ -151,7 +189,7 @@ ruff check .
 pdf-tools/
 ├── pdf_tools/           # Main package
 │   ├── common/         # Shared utilities and enums
-│   ├── gui/           # PyQt6 GUI application
+│   ├── gui/           # Flet GUI application
 │   └── __main__.py    # CLI entry point
 ├── scripts/           # Development scripts
 ├── pyproject.toml     # Project configuration

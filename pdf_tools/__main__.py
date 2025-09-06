@@ -154,7 +154,7 @@ def gui():
         gui_main()
     except ImportError as e:
         click.echo(f"❌ GUI dependencies not available: {e}")
-        click.echo("Please install PyQt6: pip install PyQt6")
+        click.echo("Please install Flet: pip install flet")
     except Exception as e:
         click.echo(f"❌ Failed to launch GUI: {e}")
 
