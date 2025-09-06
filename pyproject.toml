@@ -15,7 +15,7 @@ dependencies = [
     "coloredlogs",
     "dotenv",
     "click",
-    "PyQt6",
+    "flet",
     "pre-commit",
 ]
 requires-python = ">=3.10"
