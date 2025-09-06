@@ -1,0 +1,40 @@
+# Pre-commit configuration for PDF Tools project
+# See https://pre-commit.com for more information
+
+repos:
+  # Ruff linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.6.4
+    hooks:
+      # Run the linter.
+      - id: ruff
+        args: [--fix]
+        name: "Ruff Linter (with auto-fix)"
+      # Run the formatter.
+      - id: ruff-format
+        name: "Ruff Formatter"
+
+  # Additional useful hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Check for files that contain merge conflict strings
+      - id: check-merge-conflict
+      # Check for debugger imports and py37+ `breakpoint()` calls
+      - id: debug-statements
+      # Check for files that would conflict in case-insensitive filesystems
+      - id: check-case-conflict
+      # Ensure that a file is either empty or ends with one newline
+      - id: end-of-file-fixer
+      # Trim trailing whitespace
+      - id: trailing-whitespace
+      # Check whether the files parse as valid python
+      - id: check-ast
+      # Check for valid TOML syntax
+      - id: check-toml
+      # Check for valid YAML syntax
+      - id: check-yaml
+      # Don't commit to main branch directly (commented out for development)
+      # - id: no-commit-to-branch
+      #   args: [--branch, main]

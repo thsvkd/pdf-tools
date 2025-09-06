@@ -16,11 +16,18 @@ dependencies = [
     "dotenv",
     "click",
     "PyQt6",
+    "pre-commit",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 [project.scripts]
 pdf-tools = "pdf_tools.__main__:main"
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pre-commit"
+]
 
 [tool.setuptools.packages.find]
 where = ["."]

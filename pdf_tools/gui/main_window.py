@@ -326,9 +326,7 @@ class MainWindow(QMainWindow):
     # File selection methods
     def add_merge_files(self):
         """Add PDF files for merging"""
-        files, _ = QFileDialog.getOpenFileNames(
-            self, "Select PDF Files", "", "PDF Files (*.pdf)"
-        )
+        files, _ = QFileDialog.getOpenFileNames(self, "Select PDF Files", "", "PDF Files (*.pdf)")
         for file in files:
             self.merge_file_list.addItem(file)
 
@@ -344,17 +342,13 @@ class MainWindow(QMainWindow):
 
     def browse_merge_output(self):
         """Browse for merge output file"""
-        file, _ = QFileDialog.getSaveFileName(
-            self, "Save Merged PDF", "", "PDF Files (*.pdf)"
-        )
+        file, _ = QFileDialog.getSaveFileName(self, "Save Merged PDF", "", "PDF Files (*.pdf)")
         if file:
             self.merge_output_edit.setText(file)
 
     def browse_compress_input(self):
         """Browse for compress input file"""
-        file, _ = QFileDialog.getOpenFileName(
-            self, "Select PDF File", "", "PDF Files (*.pdf)"
-        )
+        file, _ = QFileDialog.getOpenFileName(self, "Select PDF File", "", "PDF Files (*.pdf)")
         if file:
             self.compress_input_edit.setText(file)
             # Auto-set output filename
@@ -364,9 +358,7 @@ class MainWindow(QMainWindow):
 
     def browse_compress_output(self):
         """Browse for compress output file"""
-        file, _ = QFileDialog.getSaveFileName(
-            self, "Save Compressed PDF", "", "PDF Files (*.pdf)"
-        )
+        file, _ = QFileDialog.getSaveFileName(self, "Save Compressed PDF", "", "PDF Files (*.pdf)")
         if file:
             self.compress_output_edit.setText(file)
 
@@ -399,9 +391,7 @@ class MainWindow(QMainWindow):
 
     def browse_pdf_to_image_input(self):
         """Browse for PDF to image input file"""
-        file, _ = QFileDialog.getOpenFileName(
-            self, "Select PDF File", "", "PDF Files (*.pdf)"
-        )
+        file, _ = QFileDialog.getOpenFileName(self, "Select PDF File", "", "PDF Files (*.pdf)")
         if file:
             self.pdf_to_image_input_edit.setText(file)
             # Auto-set output folder
@@ -510,14 +500,10 @@ class MainWindow(QMainWindow):
             button=self.pdf_to_image_btn,
         )
 
-    def start_operation(
-        self, operation, *args, progress_bar=None, button=None, **kwargs
-    ):
+    def start_operation(self, operation, *args, progress_bar=None, button=None, **kwargs):
         """Start a background operation"""
         if self.worker_thread and self.worker_thread.isRunning():
-            QMessageBox.information(
-                self, "Info", "Another operation is already running."
-            )
+            QMessageBox.information(self, "Info", "Another operation is already running.")
             return
 
         # Setup UI for operation
@@ -533,12 +519,8 @@ class MainWindow(QMainWindow):
 
         # Start worker thread
         self.worker_thread = WorkerThread(operation, *args, **kwargs)
-        self.worker_thread.finished.connect(
-            lambda msg: self.on_operation_finished(msg, progress_bar, button)
-        )
-        self.worker_thread.error.connect(
-            lambda err: self.on_operation_error(err, progress_bar, button)
-        )
+        self.worker_thread.finished.connect(lambda msg: self.on_operation_finished(msg, progress_bar, button))
+        self.worker_thread.error.connect(lambda err: self.on_operation_error(err, progress_bar, button))
         self.worker_thread.start()
 
     def on_operation_finished(self, message, progress_bar=None, button=None):
