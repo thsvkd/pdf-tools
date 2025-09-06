@@ -1,30 +1,37 @@
 {
-  // Set Ruff to default Python inter
-  "python.linting.enabled": true,
-  "python.linting.ruffEnabled": true,
-  "python.linting.pylintEnabled": false,
-  "python.linting.flake8Enabled": false,
-  "python.linting.mypyEnabled": false,
-  
-  // Set Ruff to the default formatter
-  "python.formatting.provider": "none",
+  // Python related settings
+  // "python.defaultInterpreterPath": "./.venv/bin/python",
+  // "python.terminal.activateEnvironment": true,
+
+  // Ruff formatter settings
   "[python]": {
-      "editor.defaultFormatter": "charliermarsh.ruff",
-      "editor.formatOnSave": true,
-      "editor.codeActionsOnSave": {
-          "source.fixAll.ruff": "explicit",
-          "source.organizeImports.ruff": "explicit"
-      }
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    },
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false
   },
-  
-  // Editor settings (matching Ruff settings)
-  "editor.rulers": [88],
-  "python.analysis.typeCheckingMode": "basic",
-  
-  // Automatic formatting when saving files
-  "editor.formatOnSave": true,
-  "editor.formatOnPaste": false,
-  "editor.formatOnType": false,
+
+  // Ruff extension settings - latest method
+  "ruff.configurationPreference": "filesystemFirst",
+  "ruff.configuration": "./pyproject.toml",
+  "ruff.importStrategy": "fromEnvironment",
+
+  // Python analysis settings
+  // "python.analysis.typeCheckingMode": "basic",
+  // "python.analysis.autoImportCompletions": true,
+  // "python.analysis.fixAll": [
+  //   "source.unusedImports"
+  // ],
+  // Other settings
+  "files.associations": {
+    "*.py": "python",
+    "pyproject.toml": "toml"
+  },
+  // GitHub Copilot settings for commit message generation
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
       "text": "Write the first line in a format like Feature: ***, Fix: ***, or Refactor: *** (Write in words that are often used in commit messages)."

@@ -125,6 +125,7 @@ def gui():
     """Launch the PDF Tools GUI application"""
     try:
         from .gui.app import main as gui_main
+
         gui_main()
     except ImportError as e:
         click.echo(f"❌ GUI dependencies not available: {e}")
@@ -134,7 +135,11 @@ def gui():
 
 
 @cli.command()
-@click.option("--shell", type=click.Choice(["bash", "zsh", "fish"]), help="Shell type (if not specified, auto-detect)")
+@click.option(
+    "--shell",
+    type=click.Choice(["bash", "zsh", "fish"]),
+    help="Shell type (if not specified, auto-detect)",
+)
 def completion(shell):
     """Setup shell completion for pdf-tools"""
     import subprocess

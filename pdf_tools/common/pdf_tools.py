@@ -87,7 +87,12 @@ class PDFTools:
         except Exception as e:
             logger.error(f"❌ Error occurred during merging: {e}")
 
-    def compress_pdf(self, input_path: str, output_path: Optional[str] = None, quality: str = "printer") -> bool:
+    def compress_pdf(
+        self,
+        input_path: str,
+        output_path: Optional[str] = None,
+        quality: str = "printer",
+    ) -> bool:
         """
         High-performance PDF compression function using Ghostscript (with progress bar)
 
