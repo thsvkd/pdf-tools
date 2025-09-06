@@ -15,6 +15,7 @@ dependencies = [
     "coloredlogs",
     "dotenv",
     "click",
+    "PyQt6",
 ]
 requires-python = ">=3.8"
 
@@ -27,13 +28,14 @@ include = ["pdf_tools"]
 exclude = [] 
 
 [tool.ruff]
-# 라인 길이 설정
+# Line length setting
 line-length = 88
 
-# Python 버전 설정
+# Python version setting
 target-version = "py312"
 
-# 체크할 규칙들
+[tool.ruff.lint]
+# Check rules
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -55,5 +57,5 @@ indent-style = "space"
 line-ending = "auto"
 
 [tool.ruff.lint.isort]
-# import 정렬 설정
+# Import sorting settings
 known-first-party = ["pdf_tools"]

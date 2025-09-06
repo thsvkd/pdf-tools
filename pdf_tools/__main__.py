@@ -7,7 +7,7 @@ import click
 import coloredlogs
 from dotenv import load_dotenv
 
-from .pdf_tools import PDFTools
+from .common.pdf_tools import PDFTools
 
 
 def setup_file_logging():
@@ -118,6 +118,19 @@ def pdf_to_image(pdf, output, dpi, format):
     """Convert PDF to images"""
     tools = PDFTools()
     tools.pdf_to_image(list(pdf), output, dpi, format)
+
+
+@cli.command()
+def gui():
+    """Launch the PDF Tools GUI application"""
+    try:
+        from .gui.app import main as gui_main
+        gui_main()
+    except ImportError as e:
+        click.echo(f"❌ GUI dependencies not available: {e}")
+        click.echo("Please install PyQt6: pip install PyQt6")
+    except Exception as e:
+        click.echo(f"❌ Failed to launch GUI: {e}")
 
 
 @cli.command()
