@@ -53,6 +53,16 @@
       ]
     },
     {
+      "name": "Run pdf_tools (gui)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pdf_tools",
+      "console": "integratedTerminal",
+      "args": [
+        "gui"
+      ]
+    },
+    {
       "name": "Current file",
       "type": "debugpy",
       "request": "launch",
