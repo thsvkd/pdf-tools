@@ -17,7 +17,6 @@ dependencies = [
     "click",
     "flet>=0.28.3",
     "flet-desktop>=0.28.3",
-    "pre-commit",
 ]
 requires-python = ">=3.10"
 
